@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWASP Security Demo App</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>🚨 OWASP Security Demo App 🚨</h1>
+        <p>This application is intentionally built with common web vulnerabilities for educational purposes.</p>
+        <p class="warning-note"><strong>DO NOT</strong> use this code in a production environment.</p>
+        <div class="security-toggle">
+            <label>
+                <input type="checkbox" id="secureToggle" onchange="toggleSecureMode()">
+                <span class="slider"></span>
+                <span class="toggle-text">Secure Mode</span>
+            </label>
+        </div>
+    </header>
+
+    <nav>
+        <button onclick="showSection('bac-section')">A01: Broken Access Control</button>
+        <button onclick="showSection('crypto-section')">A02: Cryptographic Failures</button>
+        <button onclick="showSection('injection-section')">A03: Injection</button>
+        <button onclick="showSection('design-section')">A04: Insecure Design</button>
+        <button onclick="showSection('misconfig-section')">A05: Security Misconfiguration</button>
+        <button onclick="showSection('components-section')">A06: Vulnerable Components</button>
+        <button onclick="showSection('auth-section')">A07: Auth Failures</button>
+        <button onclick="showSection('integrity-section')">A08: Integrity Failures</button>
+        <button onclick="showSection('logging-section')">A09: Logging Failures</button>
+        <button onclick="showSection('ssrf-section')">A10: SSRF</button>
+        <button onclick="showSection('upload-section')">File Upload</button>
+    </nav>
+
+    <main>
+        <section id="injection-section" class="demo-section active">
+            <h2>A03:2021 - Injection</h2>
+            <p><strong>Vulnerability:</strong> User-supplied data is not validated, filtered, or sanitized by the application.</p>
+            
+            <h3>1. Cross-Site Scripting (XSS)</h3>
+            <p>User input is reflected directly on the page without proper sanitization, allowing malicious scripts to execute.</p>
+            <div class="explanation">
+                <h4>How to Demonstrate:</h4>
+                <ol>
+                    <li>Enter a normal comment (e.g., "Hello, world!"). Click "Add Comment".</li>
+                    <li>Enter a malicious script: 
+                    </li>
+                    <li>Click "Add Comment".</li>
+                    <li><strong>Observation:</strong> An alert box will pop up, demonstrating the XSS. The script
+                        executed in your browser.</li>
+                    <li><strong>Fix:</strong> Always sanitize or properly escape user input before rendering it in HTML
+                        (e.g., convert `<` to `&lt;`).</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <input type="text" id="xssCommentInput" placeholder="Enter a comment">
+                <button onclick="addXSSComment()">Add Comment</button>
+                <button onclick="loadXSSComments()">Refresh Comments</button>
+                <button onclick="clearXSSComments()">Clear All Comments</button>
+            </div>
+            <h4>Comments:</h4>
+            <div id="xssCommentsDisplay" class="display-area">
+                No comments yet.
+            </div>
+            
+            <h3>2. SQL Injection (Simulated)</h3>
+            <p>User input is directly concatenated into a "query" or command without proper escaping, allowing an attacker to manipulate the query logic.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>Enter a normal username (e.g., "alice"). Click "Search User".</li>
+                    <li><strong>Observation:</strong> Only "alice" will be returned.</li>
+                    <li>Enter a malicious string: <code></code></li>
+                    <li>Click "Search User".</li>
+                    <li><strong>Observation:</strong> All users from the simulated database are returned, even though
+                        you only searched for a specific username. This bypasses the intended search logic.</li>
+                    <li><strong>Fix:</strong> Always use parameterized queries (prepared statements) when interacting
+                        with databases. Never concatenate user input directly into SQL queries.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <input type="text" id="injectionUsernameInput" placeholder="Enter username to search">
+                <button onclick="searchInjectionUser()">Search User</button>
+            </div>
+            <h3>Search Results:</h3>
+            <div id="injectionResultsDisplay" class="display-area">
+                No search performed yet.
+            </div>
+            
+            <h3>3. Command Injection (Simulated)</h3>
+            <p>User input is directly concatenated into a system command without proper validation, allowing an attacker to execute arbitrary commands.</p>
+            <div class="explanation">
+                <h4>How to Demonstrate:</h4>
+                <ol>
+                    <li>Enter a normal filename (e.g., "document.txt"). Click "Read File".</li>
+                    <li><strong>Observation:</strong> The simulated content of the file is displayed.</li>
+                    <li>Enter a malicious string: <code></code></li>
+                    <li>Click "Read File".</li>
+                    <li><strong>Observation:</strong> A warning appears indicating that command injection was detected.</li>
+                    <li><strong>Fix:</strong> Never use user input directly in system commands. Use input validation, allowlists, and safer alternatives to executing commands.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <input type="text" id="commandInjectionInput" placeholder="Enter filename to read">
+                <button onclick="simulateCommandInjection()">Read File</button>
+            </div>
+            <h3>Command Results:</h3>
+            <div id="commandInjectionDisplay" class="display-area">
+                No command executed yet.
+            </div>
+        </section>
+
+        <section id="bac-section" class="demo-section">
+            <h2>A01:2021 - Broken Access Control</h2>
+            <p><strong>Vulnerability:</strong> Application fails to properly enforce permissions, allowing users to
+                access unauthorized resources or perform unauthorized actions.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <h4>1. Insecure Direct Object Reference (IDOR):</h4>
+                <ol>
+                    <li>Login as a **Regular User** (username: `user`, password: `password`).</li>
+                    <li>Under "View User Profile by ID", enter your own ID (`101`). Click "Get Profile".</li>
+                    <li><strong>Observation:</strong> Your profile is displayed.</li>
+                    <li>Now, enter another user's ID (e.g., `2` for Bob, or `4` for Admin). Click "Get Profile".</li>
+                    <li><strong>Observation:</strong> You can view other users' profiles, even though you are not
+                        authorized.</li>
+                    <li><strong>Fix:</strong> Server-side logic must verify that the authenticated user is authorized to
+                        access the requested resource (e.g., `if (loggedInUser.id !== requestedId && loggedInUser.role
+                        !== 'admin') { deny }`).</li>
+                </ol>
+                <h4>2. Role-Based Access Bypass:</h4>
+                <ol>
+                    <li>Ensure you are logged in as a **Regular User**.</li>
+                    <li>Click "Access Admin Panel".</li>
+                    <li><strong>Observation:</strong> You will see "Welcome to the Admin Panel!" and "secret data".</li>
+                    <li><strong>Vulnerability:</strong> The client-side UI might hide the "Admin Panel" button for
+                        regular users, but the **server-side API endpoint does not check the user's role**. An attacker
+                        can directly call the API endpoint (e.g., using `fetch` in the browser console or `curl`).</li>
+                    <li><strong>Fix:</strong> Every server-side endpoint that requires specific permissions (like admin
+                        access) MUST perform a server-side check of the authenticated user's role/permissions.</li>
+                </ol>
+            </div>
+
+            <div class="controls">
+                <h3>Login:</h3>
+                <input type="text" id="bacUsername" placeholder="Username (user/admin)">
+                <input type="password" id="bacPassword" placeholder="Password (password/adminpass)">
+                <button onclick="bacLogin()">Login</button>
+                <button onclick="bacLogout()">Logout</button>
+                <p>Logged in as: <span id="bacCurrentUser">Not logged in</span></p>
+            </div>
+
+            <div class="controls">
+                <h3>View User Profile by ID (IDOR Demo):</h3>
+                <input type="number" id="bacUserIdInput" placeholder="Enter User ID (e.g., 101, 2, 4)">
+                <button onclick="bacGetUserProfile()">Get Profile</button>
+                <div id="bacUserProfileDisplay" class="display-area">
+                    No profile loaded.
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Access Admin Panel (Role Bypass Demo):</h3>
+                <button onclick="bacAccessAdminPanel()">Access Admin Panel</button>
+                <div id="bacAdminPanelDisplay" class="display-area">
+                    No admin data loaded.
+                </div>
+            </div>
+        </section>
+
+        <section id="csrf-section" class="demo-section">
+            <h2>Cross-Site Request Forgery (CSRF) - Part of A01:2021</h2>
+            <p><strong>Vulnerability:</strong> When a web application allows requests that originate from another site, attackers can trick users into submitting requests they didn't intend.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>Login as a user (username: <code>user</code>, password: <code>password</code>).</li>
+                    <li>Check your account balance.</li>
+                    <li>Open the "Attacker's Site" in a new tab (simulated below).</li>
+                    <li>Notice how the attacker's site can make a transfer request without your explicit consent.</li>
+                    <li><strong>Fix:</strong> Implement anti-CSRF tokens that must be included with each sensitive request.</li>
+                </ol>
+            </div>
+
+            <div class="controls">
+                <h3>Your Bank Account:</h3>
+                <button onclick="csrfCheckBalance()">Check Balance</button>
+                <div id="csrfBalanceDisplay" class="display-area">
+                    Not logged in or balance not checked.
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Make a Transfer:</h3>
+                <input type="text" id="csrfRecipient" placeholder="Recipient (e.g., admin)">
+                <input type="number" id="csrfAmount" placeholder="Amount">
+                <button onclick="csrfTransferMoney()">Transfer Money</button>
+                <div id="csrfTransferResult" class="display-area">
+                    No transfer made yet.
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Attacker's Site (Simulation):</h3>
+                <div class="attacker-site">
+                    <div class="attacker-header">Cute Cat Pictures</div>
+                    <div class="attacker-content">
+                        <img src="https://placekitten.com/300/200" alt="Cute cat">
+                        <p>Look at this adorable kitten!</p>
+                        <!-- Hidden malicious form that auto-submits -->
+                        <div class="malicious-code">
+                            <p>Hidden in this page:</p>
+                            <pre><code>&lt;form id="csrf-attack" action="http://localhost:3000/api/csrf/transfer" method="POST" style="display:none"&gt;
+    &lt;input type="hidden" name="to" value="admin"&gt;
+    &lt;input type="hidden" name="amount" value="100"&gt;
+&lt;/form&gt;
+&lt;script&gt;
+    document.getElementById('csrf-attack').submit();
+&lt;/script&gt;</code></pre>
+                        </div>
+                        <button onclick="simulateCsrfAttack()" class="attack-button">Simulate CSRF Attack</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="upload-section" class="demo-section">
+            <h2>Insecure File Upload - Related to Multiple Categories</h2>
+            <p><strong>Vulnerability:</strong> When a web application doesn't properly validate uploaded files, attackers can upload malicious files that may be executed on the server.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>Try uploading a normal image file using the vulnerable upload.</li>
+                    <li>Then try uploading a file with a different extension (e.g., .php, .js, .html).</li>
+                    <li><strong>Observation:</strong> The vulnerable upload accepts any file type without validation.</li>
+                    <li>Try the same with the secure upload - it will only accept image files.</li>
+                    <li><strong>Fix:</strong> Validate file types, extensions, and content; store uploaded files outside the web root; rename files to prevent overwriting.</li>
+                </ol>
+            </div>
+
+            <div class="controls">
+                <h3>Vulnerable File Upload:</h3>
+                <form id="vulnerableUploadForm" enctype="multipart/form-data">
+                    <input type="file" id="vulnerableFileInput">
+                    <button type="button" onclick="uploadVulnerable()">Upload File (Vulnerable)</button>
+                </form>
+                <div id="vulnerableUploadResult" class="display-area">
+                    No file uploaded yet.
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Secure File Upload:</h3>
+                <form id="secureUploadForm" enctype="multipart/form-data">
+                    <input type="file" id="secureFileInput">
+                    <button type="button" onclick="uploadSecure()">Upload File (Secure)</button>
+                </form>
+                <div id="secureUploadResult" class="display-area">
+                    No file uploaded yet.
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>Uploaded Files:</h3>
+                <button onclick="listUploadedFiles()">List All Uploaded Files</button>
+                <div id="uploadedFilesList" class="display-area">
+                    No files listed yet.
+                </div>
+            </div>
+        </section>
+
+        <!-- A01:2021 - Broken Access Control (already exists as bac-section) -->
+
+        <section id="crypto-section" class="demo-section">
+            <h2>A02:2021 - Cryptographic Failures</h2>
+            <p><strong>Vulnerability:</strong> Failures related to cryptography that often lead to sensitive data exposure or system compromise.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>Enter sensitive information in the insecure form below.</li>
+                    <li><strong>Observation:</strong> Data is transmitted in plaintext or with weak encryption.</li>
+                    <li>Try the secure version which uses proper encryption.</li>
+                    <li><strong>Fix:</strong> Use strong, up-to-date encryption algorithms, proper key management, and secure protocols.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>Insecure Password Storage:</h3>
+                <input type="text" id="cryptoUsername" placeholder="Username">
+                <input type="password" id="cryptoPassword" placeholder="Password">
+                <button onclick="storePasswordInsecure()">Store Password (Insecure)</button>
+                <button onclick="storePasswordSecure()">Store Password (Secure)</button>
+                <div id="cryptoResult" class="display-area">
+                    No password stored yet.
+                </div>
+            </div>
+            <div class="controls">
+                <h3>Stored Passwords:</h3>
+                <button onclick="showStoredPasswords()">Show Stored Passwords</button>
+                <div id="storedPasswordsDisplay" class="display-area">
+                    No passwords retrieved yet.
+                </div>
+            </div>
+        </section>
+
+        <!-- A03:2021 - Injection (already exists as injection-section) -->
+
+        <section id="design-section" class="demo-section">
+            <h2>A04:2021 - Insecure Design</h2>
+            <p><strong>Vulnerability:</strong> Flaws in design and architecture that cannot be fixed by perfect implementation.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>This demo shows a business logic flaw in a discount code system.</li>
+                    <li>Try applying a discount code and then manipulating the order flow.</li>
+                    <li><strong>Observation:</strong> The system allows discount stacking or bypassing intended limitations.</li>
+                    <li><strong>Fix:</strong> Implement secure design patterns, threat modeling, and reference architectures.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>Shopping Cart:</h3>
+                <div id="shoppingCartDisplay" class="display-area">
+                    <p>Product: Security Training Course</p>
+                    <p>Price: $100.00</p>
+                </div>
+                <input type="text" id="discountCode" placeholder="Enter discount code">
+                <button onclick="applyDiscount()">Apply Discount</button>
+                <button onclick="checkout()">Checkout</button>
+                <div id="checkoutResult" class="display-area">
+                    No checkout performed yet.
+                </div>
+            </div>
+        </section>
+
+        <section id="misconfig-section" class="demo-section">
+            <h2>A05:2021 - Security Misconfiguration</h2>
+            <p><strong>Vulnerability:</strong> Missing appropriate security hardening, improper configurations, or open cloud storage.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>This demo shows a system with default configurations and unnecessary features enabled.</li>
+                    <li>Try accessing the "debug" endpoint or viewing error details.</li>
+                    <li><strong>Observation:</strong> Detailed error messages reveal sensitive information about the system.</li>
+                    <li><strong>Fix:</strong> Implement a secure configuration process, minimal platform, and remove unnecessary features.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>Server Information:</h3>
+                <button onclick="getServerInfo()">Get Server Info (Insecure)</button>
+                <button onclick="getServerInfoSecure()">Get Server Info (Secure)</button>
+                <div id="serverInfoDisplay" class="display-area">
+                    No server info retrieved yet.
+                </div>
+            </div>
+            <div class="controls">
+                <h3>Error Handling:</h3>
+                <button onclick="triggerError()">Trigger Error (Insecure)</button>
+                <button onclick="triggerErrorSecure()">Trigger Error (Secure)</button>
+                <div id="errorDisplay" class="display-area">
+                    No error triggered yet.
+                </div>
+            </div>
+        </section>
+
+        <section id="components-section" class="demo-section">
+            <h2>A06:2021 - Vulnerable and Outdated Components</h2>
+            <p><strong>Vulnerability:</strong> Using components with known vulnerabilities or failing to update/patch systems.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>This demo simulates a system using outdated libraries with known vulnerabilities.</li>
+                    <li>View the dependency information and vulnerability reports.</li>
+                    <li><strong>Fix:</strong> Remove unused dependencies, continuously inventory versions, monitor for vulnerabilities, and patch promptly.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>Dependency Scanner:</h3>
+                <button onclick="scanDependencies()">Scan Dependencies</button>
+                <div id="dependencyScanResult" class="display-area">
+                    No scan performed yet.
+                </div>
+            </div>
+        </section>
+
+        <section id="auth-section" class="demo-section">
+            <h2>A07:2021 - Identification and Authentication Failures</h2>
+            <p><strong>Vulnerability:</strong> Weaknesses in authentication mechanisms that allow attackers to assume other users' identities.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>Try logging in with weak credentials or exploiting authentication flaws.</li>
+                    <li>Test password reset functionality for vulnerabilities.</li>
+                    <li><strong>Fix:</strong> Implement multi-factor authentication, strong password policies, and secure session management.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>Weak Authentication:</h3>
+                <input type="text" id="authUsername" placeholder="Username">
+                <input type="password" id="authPassword" placeholder="Password">
+                <button onclick="loginInsecure()">Login (Insecure)</button>
+                <button onclick="loginSecure()">Login (Secure)</button>
+                <div id="authResult" class="display-area">
+                    Not logged in.
+                </div>
+            </div>
+            <div class="controls">
+                <h3>Password Reset:</h3>
+                <input type="text" id="resetEmail" placeholder="Email address">
+                <button onclick="resetPasswordInsecure()">Reset Password (Insecure)</button>
+                <button onclick="resetPasswordSecure()">Reset Password (Secure)</button>
+                <div id="resetResult" class="display-area">
+                    No reset requested.
+                </div>
+            </div>
+        </section>
+
+        <section id="integrity-section" class="demo-section">
+            <h2>A08:2021 - Software and Data Integrity Failures</h2>
+            <p><strong>Vulnerability:</strong> Code and infrastructure that doesn't protect against integrity violations.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>This demo shows insecure deserialization and lack of integrity checks.</li>
+                    <li>Try modifying the serialized data to inject malicious content.</li>
+                    <li><strong>Fix:</strong> Use digital signatures, secure CI/CD pipelines, and verify software/data integrity.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>User Preferences:</h3>
+                <textarea id="userPrefs" placeholder="{&quot;theme&quot;:&quot;light&quot;,&quot;notifications&quot;:true}"></textarea>
+                <button onclick="savePreferencesInsecure()">Save Preferences (Insecure)</button>
+                <button onclick="savePreferencesSecure()">Save Preferences (Secure)</button>
+                <div id="prefsResult" class="display-area">
+                    No preferences saved.
+                </div>
+            </div>
+            <div class="controls">
+                <h3>Load Preferences:</h3>
+                <button onclick="loadPreferences()">Load Preferences</button>
+                <div id="loadedPrefsDisplay" class="display-area">
+                    No preferences loaded.
+                </div>
+            </div>
+        </section>
+
+        <section id="logging-section" class="demo-section">
+            <h2>A09:2021 - Security Logging and Monitoring Failures</h2>
+            <p><strong>Vulnerability:</strong> Insufficient logging, monitoring, and response to security events.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>This demo shows inadequate logging of security-relevant events.</li>
+                    <li>Try performing actions that should be logged and monitored.</li>
+                    <li><strong>Fix:</strong> Implement effective monitoring, alerting, and incident response processes.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>Login Attempts:</h3>
+                <input type="text" id="logUsername" placeholder="Username">
+                <input type="password" id="logPassword" placeholder="Password">
+                <button onclick="attemptLoginWithLogging()">Attempt Login</button>
+                <div id="loginAttemptResult" class="display-area">
+                    No login attempted.
+                </div>
+            </div>
+            <div class="controls">
+                <h3>View Logs:</h3>
+                <button onclick="viewLogsInsecure()">View Logs (Insecure)</button>
+                <button onclick="viewLogsSecure()">View Logs (Secure)</button>
+                <div id="logsDisplay" class="display-area">
+                    No logs retrieved.
+                </div>
+            </div>
+        </section>
+
+        <section id="ssrf-section" class="demo-section">
+            <h2>A10:2021 - Server-Side Request Forgery</h2>
+            <p><strong>Vulnerability:</strong> Web application fetches a remote resource without validating the user-supplied URL.</p>
+            <div class="explanation">
+                <h3>How to Demonstrate:</h3>
+                <ol>
+                    <li>Enter a normal URL to fetch content (e.g., <code>https://example.com</code>).</li>
+                    <li>Then try accessing internal resources (e.g., <code>http://localhost:3000/api/admin-data</code> or <code>file:///etc/passwd</code>).</li>
+                    <li><strong>Observation:</strong> The vulnerable endpoint will attempt to fetch content from any URL, including internal resources.</li>
+                    <li><strong>Fix:</strong> Implement allowlists, DNS resolution controls, and network segmentation.</li>
+                </ol>
+            </div>
+            <div class="controls">
+                <h3>URL Fetcher:</h3>
+                <input type="text" id="ssrfUrl" placeholder="Enter URL to fetch">
+                <button onclick="fetchUrlInsecure()">Fetch URL (Insecure)</button>
+                <button onclick="fetchUrlSecure()">Fetch URL (Secure)</button>
+                <div id="ssrfResult" class="display-area">
+                    No URL fetched yet.
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

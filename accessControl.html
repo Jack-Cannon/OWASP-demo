@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broken Access Control Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 50px auto;
+        }
+
+        h1 {
+            color: #d9534f;
+            /* Red for emphasis on 'Broken' */
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #5cb85c;
+            /* Green for action */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        #profileDisplay {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 18px;
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #007bff;
+            /* Blue for displayed information */
+            font-weight: bold;
+        }
+
+        .explanation {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #ffeeba;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚨 Broken Access Control: IDOR Example</h1>
+        <p>This page simulates a user profile viewer. In a real application, you'd typically only be able to view your
+            own profile.</p>
+        <p><strong>The vulnerability:</strong> There's no backend check to ensure the user requesting the profile ID is
+            authorized to view it.</p>
+
+        <label for="userId">Enter User ID to View:</label>
+        <input type="text" id="userId" value="123">
+        <button onclick="viewProfile()">View Profile</button>
+
+        <div id="profileDisplay">
+            No profile viewed yet. Try "123", "124", "125"...
+        </div>
+
+        <div class="explanation">
+            <h3>💡 How to Demonstrate the Vulnerability:</h3>
+            <ol>
+                <li>Enter a user ID (e.g., "123") and click "View Profile".</li>
+                <li>Now, change the User ID to a different number (e.g., "124" or "125") and click "View Profile" again.
+                </li>
+                <li>**Observation:** You can view any user's profile data by simply changing the ID, without any
+                    authentication or authorization checks.</li>
+                <li>**Real-world impact:** An attacker could iterate through IDs to scrape sensitive data from many
+                    users.</li>
+            </ol>
+            <p><strong>The Fix:</strong> Server-side logic should always verify that the authenticated user has
+                permission to access the requested resource (e.g., `if (loggedInUser.id === requestedUserId ||
+                loggedInUser.isAdmin) { ... }`).</p>
+        </div>
+    </div>
+
+    <script>
+        function viewProfile() {
+            const userId = document.getElementById('userId').value;
+            const profileDisplay = document.getElementById('profileDisplay');
+            if (userId) {
+                // In a real application, this would be an AJAX call to a server endpoint:
+                // fetch(`/api/profile?id=${userId}`)
+                //     .then(response => response.json())
+                //     .then(data => profileDisplay.textContent = `User Profile for ID: ${data.name || userId}`);
+                // For this client-side demo, we just simulate the display:
+                profileDisplay.textContent = `User Profile for ID: ${userId}`;
+                profileDisplay.style.color = '#dc3545'; // Indicate potential vulnerability
+            } else {
+                profileDisplay.textContent = 'Please enter a User ID.';
+                profileDisplay.style.color = '#ffc107'; // Warning color
+            }
+        }
+
+        // Initialize with a default profile display on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('profileDisplay').textContent = 'Enter an ID and click "View Profile" to see the "vulnerability".';
+            document.getElementById('profileDisplay').style.color = '#007bff';
+        });
+    </script>
+</body>
+
+</html>
